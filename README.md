@@ -1,21 +1,145 @@
-# Yahoo Stock Price Forecasting
+# 📈 Stock Price Forecasting System — ARIMA, LSTM and Transformer
 
-This project builds a complete end-to-end stock price forecasting system using historical data from Yahoo Finance. It compares three major forecasting paradigms—ARIMA, LSTM, and Transformer—to predict the daily Close price and understand how traditional statistical methods perform relative to modern deep learning architectures on noisy, nonlinear financial data. The goal is not only to create accurate forecasts but also to explore how forecasting performance improves as we move from linear models to recurrent neural networks and finally to attention-based models.
+This repository contains my end-to-end Stock Price Forecasting System built using Python, PyTorch and time-series modeling techniques.  
+The system predicts the next-day closing price of a stock using historical OHLCV data and compares how classical statistical models perform against modern deep learning architectures.
 
-The workflow of the project begins with loading and understanding the raw stock data. It then performs extensive exploratory data analysis (EDA) to examine long-term trends, volatility patterns, moving averages, seasonal effects, and trading volume behavior. These visual and statistical insights help reveal the nature of the stock’s price movements, exposing periods of stability, sharp spikes, drift, and noise. After this, the project proceeds into preprocessing, where the dataset is sorted chronologically, the Date column is converted into a usable format, missing values are handled, and the data is split into training, validation, and test segments without shuffling to preserve temporal structure. Deep learning models require normalized inputs, so the Close price is scaled using MinMaxScaler. To prepare the data for sequence-based models, sliding windows of past prices are generated to create supervised learning samples.
+---
 
-The project uses three models because each one represents a different stage in the evolution of time-series forecasting. ARIMA was chosen as the classical baseline because it is one of the most widely used statistical models for time-series analysis. ARIMA models linear relationships and lagged dependencies using autoregressive and moving-average components. Even though stock markets rarely behave linearly or remain stationary, ARIMA provides a meaningful benchmark that helps measure how much more complex models improve upon simple statistical assumptions. LSTM was selected because financial markets exhibit nonlinear, long-term dependencies, and shifting temporal patterns that ARIMA cannot capture. LSTMs use memory cells and gating mechanisms to remember information over long sequences, allowing them to learn complex trends, volatility patterns, and temporal interactions directly from raw data without manual feature engineering. The Transformer model was included because it represents the most modern and powerful approach to sequence modeling. Transformers use self-attention to evaluate all past timesteps simultaneously, identifying which moments in history are most relevant to the prediction. This enables Transformers to model long-range dependencies, sudden market shifts, and irregular price behaviors far more effectively than LSTMs, which process sequences sequentially.
+## 🎯 Objective
+The aim of this project is to understand how different modeling approaches handle noisy, volatile and nonlinear financial data.  
+The system analyzes historical market behavior and forecasts the next closing price using three fundamentally different models: ARIMA, LSTM and Transformer.
 
-The repository is organized into well-structured modules and notebooks. The `data/` directory stores the raw stock CSV file. The `src/` directory contains utilities for loading data, generating sequences, normalizing values, computing metrics, and defining the three forecasting models. The `models/` directory stores the trained model artifacts, including ARIMA pickle files and PyTorch weights for LSTM and Transformer models. The `notebooks/` directory contains step-by-step Jupyter notebooks for EDA, preprocessing, model training, and evaluation. These notebooks provide a clear, chronological flow of the entire forecasting pipeline.
+---
 
-The dataset includes standard OHLCV features (Open, High, Low, Close, Adj Close, and Volume), with Close price chosen as the prediction target because it is widely used in financial forecasting and reflects market consensus at the end of each trading day. The preprocessing notebook performs chronological splitting into train, validation, and test sets, ensuring that future data never leaks into the past. Scaling is done only on training data to avoid target leakage. Sliding windows of 60 past days are used to predict the next day’s price, creating a large supervised dataset for the LSTM and Transformer models.
+## 📊 Dataset
+Source: Yahoo Finance  
+Records: Daily OHLCV data  
+Target: Next-day **Close** price  
+Features include:  
+Date, Open, High, Low, Close, Adj Close and Volume.
 
-Training the ARIMA model involves fitting an auto_arima configuration to identify the optimal p, d, q values. The LSTM model is trained using PyTorch, with early stopping to prevent overfitting, and the best-performing model is saved. The Transformer model uses multi-head self-attention and positional encoding to learn temporal dependencies and nonlinear relationships in the Close price series.
+Each row represents one trading day and contains both price movement and liquidity information.
 
-The evaluation notebooks compare predicted vs. true prices on the test set and compute RMSE, MAE, MAPE, and R². Results show a clear hierarchy: ARIMA performs poorly due to its linear assumptions and inability to capture volatility, producing an RMSE around 444. In contrast, the LSTM and Transformer models achieve RMSE values near 109–110, offering approximately four times better accuracy. Their MAPE values around 2.6% further demonstrate strong predictive performance. R² values above 0.74 indicate that deep learning models explain a significant portion of the variance in stock price movements, whereas ARIMA produces a strongly negative R², meaning its predictions are worse than simply predicting the mean.
+---
 
-These results highlight the strengths of modern deep learning in financial time-series forecasting. LSTMs are effective at modeling nonlinear oscillations and temporal dependencies, while Transformers excel at capturing long-range relationships and identifying which historical movements matter most. Both outperform ARIMA dramatically, confirming that classical linear models are insufficient for modeling the complex dynamics of financial markets.
+## 🧠 Models Used
 
-Future improvements to the project may include adding technical indicators such as RSI, MACD, and Bollinger Bands; incorporating macroeconomic variables and sentiment from news or social media; using multivariate models that take OHLCV into account; applying advanced architectures such as Temporal Fusion Transformers (TFT), N-BEATS, or TCNs; performing walk-forward validation for more realistic evaluation; deploying the best model in a live prediction dashboard using Streamlit or FastAPI; and integrating a backtesting engine to simulate trading strategies based on the model’s predictions.
+### **1. ARIMA (Classical Baseline)**
+A statistical model used to capture linear relationships and short-term dependencies.  
+Used here as a baseline to show the performance gap between classical and deep learning methods.
 
-The project demonstrates how forecasting accuracy improves significantly when transitioning from classical ARIMA models to LSTM networks and finally to attention-based Transformers. It serves as a strong foundation for anyone interested in applying machine learning, deep learning, or modern sequence modeling techniques to real-world financial time-series forecasting.
+### **2. LSTM (Recurrent Neural Network)**
+Learns nonlinear patterns and long-term dependencies in stock data.  
+More capable of handling volatility, drift and irregular temporal structures.
+
+### **3. Transformer (Attention-based Model)**
+Processes sequences in parallel using self-attention.  
+Captures long-range interactions and focuses on the most relevant historical movements.  
+Represents the modern state of the art in time-series forecasting.
+
+---
+
+## ⚙️ Data Preprocessing
+All data is sorted chronologically and split into Train, Validation and Test sets to avoid leakage.  
+Deep learning models use **MinMax scaling** on the Close price.  
+Sliding windows of past days are converted into supervised learning samples for LSTM and Transformer.
+
+Example:  
+Window of 60 past days → predict next day’s Close.
+
+A consistent scaler is saved and reused for evaluation.
+
+---
+
+## 🔧 Model Training
+
+### **ARIMA**
+Fitted using `auto_arima` to automatically detect optimal p, d and q values.  
+Trained directly on the raw Close price.
+
+### **LSTM**
+Framework: PyTorch  
+Loss: MSE  
+Optimizer: Adam  
+Early Stopping: Enabled  
+Lookback Window: 60 days  
+Saved as: `lstm_model.pth`
+
+### **Transformer**
+Built using PyTorch multi-head attention layers.  
+Learns relationships between all timesteps simultaneously.  
+Saved as: `tft_model.pth`
+
+---
+
+## 📈 Evaluation Metrics
+Used on all models:  
+RMSE, MAE, MAPE and R².
+
+### **Performance Summary**
+ARIMA performed poorly due to its linear assumptions and inability to capture volatility.  
+LSTM and Transformer performed significantly better, achieving more accurate predictions and explaining more variance in price movements.
+
+Sample results:  
+ARIMA RMSE ≈ 444  
+LSTM RMSE ≈ 109  
+Transformer RMSE ≈ 110
+
+Both deep learning models outperform ARIMA by nearly **4×**.
+
+---
+
+## 📌 Example Prediction Flow
+1. Load historical data  
+2. Scale inputs  
+3. Construct sliding window sequences  
+4. Feed the model  
+5. Predict next-day Close  
+6. Plot predicted vs true values  
+
+Visual plots clearly show that deep learning models follow price movements more closely.
+
+---
+
+## 🌐 App (Optional)
+A lightweight Streamlit interface can be added to input a sequence of past prices and generate real-time model predictions.
+
+---
+
+## 📂 Key Files
+- `data/yahoo_stock.csv`  
+- `models/arima_model.pkl`  
+- `models/lstm_model.pth`  
+- `models/tft_model.pth`  
+- `notebooks/eda.ipynb`  
+- `notebooks/preprocessing.ipynb`  
+- `notebooks/train_lstm.ipynb`  
+- `notebooks/train_tft.ipynb`  
+- `notebooks/arima.ipynb`  
+
+All scripts inside the `src/` folder manage preprocessing, metrics and model definitions.
+
+---
+
+## 🌟 Key Learnings
+Built and compared three generations of time-series forecasting models.  
+Understood limitations of classical forecasting in financial markets.  
+Learned how LSTM and Transformers interpret temporal patterns.  
+Designed a reproducible forecasting pipeline with clean modular code.  
+Practiced visualization and error analysis on real stock data.
+
+---
+
+## 🔮 Future Enhancements
+Add technical indicators such as RSI, MACD and moving averages.  
+Use multivariate modeling with OHLCV inputs.  
+Implement walk-forward validation for realistic forecasting.  
+Deploy the model via Streamlit or FastAPI.  
+Add trading strategy backtesting for practical evaluation.
+
+---
+
+## 👨‍💻 Author
+Sai Tanoj Salehundam  
+M.S. in Data Analytics Engineering — Northeastern University  
+Email: salehundam.s@northeastern.edu  
